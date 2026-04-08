@@ -14,8 +14,8 @@
 /letsencrypt/
 
 /html/
-html.worktrees
-legacy_limpieza*/
+/html.worktrees/
+/_legacy_limpieza_*/
 SKILL.md
 
 *.tar.zst
