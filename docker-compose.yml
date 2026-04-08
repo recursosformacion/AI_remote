@@ -1,0 +1,42 @@
+services:
+  
+  # Aplicacion web de dominio (contenido servido desde ./html)
+  web:
+    image: php:8.2-apache
+    container_name: web_dominio
+    restart: always
+    command: ["bash", "-lc", "sed -ri -e 's!/var/www/html!/var/www/html/backend/public!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && a2enmod rewrite && echo 'SetEnvIf X-Forwarded-Proto \"https\" HTTPS=on' > /etc/apache2/conf-enabled/zz-forwarded-https.conf && apache2-foreground"]
+    environment:
+      TZ: Europe/Madrid
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./html:/var/www/html
+    networks:
+      - edge_net
+
+  
+  # Gestor de trafico y certificados SSL
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: gestor_trafico
+    restart: always
+    environment:
+      TZ: Europe/Madrid
+    ports:
+      - '80:80'
+      - '443:443'
+      - '127.0.0.1:81:81'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+      - ./data/nginx/custom/production-81-auth.conf:/etc/nginx/conf.d/production.conf
+    networks:
+      - edge_net
+
+networks:
+  edge_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

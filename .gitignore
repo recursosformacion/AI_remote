@@ -1,0 +1,20 @@
+# Entorno y secretos
+.env
+.env.*
+.env copy
+*.pem
+*.key
+
+# Estado/runtime local
+.vscode/
+*.log
+
+# Datos sincronizados de servidor
+/data/
+/letsencrypt/
+
+/html/
+html.worktrees
+legacy_limpieza*/
+SKILL.md
+

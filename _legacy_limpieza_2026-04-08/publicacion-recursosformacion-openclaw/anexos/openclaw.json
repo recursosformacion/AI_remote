@@ -1,0 +1,162 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.18",
+    "lastTouchedAt": "2026-02-22T09:16:18.287Z"
+  },
+  "models": {
+    "providers": {
+      "google": {
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "apiKey": "${GEMINI_API_KEY}",
+        "api": "google-generative-ai",
+        "models": [
+          {
+            "id": "gemini-2.5-flash",
+            "name": "Gemini 2.5 Flash"
+          },
+          {
+            "id": "gemini-2.5-pro",
+            "name": "Gemini 2.5 Pro"
+          }
+        ]
+      },
+      "openai": {
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "apiKey": "${GROQ_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "llama-3.3-70b-versatile",
+            "name": "llama-3.3-70b-versatile",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "contextWindow": 131072,
+            "maxTokens": 2048
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://ollama:11434",
+        "apiKey": "ollama-local",
+        "api": "ollama",
+        "models": [
+          {
+            "id": "qwen2.5:0.5b",
+            "name": "qwen2.5:0.5b",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 32768,
+            "maxTokens": 512
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "contextTokens": 16000,
+      "maxConcurrent": 1,
+      "model": {
+        "primary": "google/gemini-2.5-flash",
+        "fallbacks": [
+          "google/gemini-2.5-pro",
+          "openai/llama-3.3-70b-versatile",
+          "ollama/qwen2.5:0.5b"
+        ]
+      },
+      "heartbeat": {
+        "every": "24h"
+      },
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokensFloor": 6000,
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 2000
+        }
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "model": {
+          "primary": "google/gemini-2.5-flash",
+          "fallbacks": [
+            "google/gemini-2.5-pro",
+            "openai/llama-3.3-70b-versatile",
+            "ollama/qwen2.5:0.5b"
+          ]
+        },
+        "subagents": {
+          "allowAgents": [
+            "healthcheck"
+          ]
+        }
+      }
+    ]
+  },
+  "commands": {
+    "native": true,
+    "nativeSkills": true,
+    "restart": true
+  },
+  "channels": {
+    "whatsapp": {
+      "dmPolicy": "open",
+      "selfChatMode": true,
+      "allowFrom": [
+        "*"
+      ],
+      "groupPolicy": "open",
+      "debounceMs": 0,
+      "mediaMaxMb": 50
+    },
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "open",
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "groups": {
+        "*": {
+          "requireMention": true
+        }
+      },
+      "allowFrom": [
+        "*"
+      ],
+      "groupPolicy": "open",
+      "streamMode": "partial"
+    }
+  },
+  "gateway": {
+    "auth": {
+      "mode": "trusted-proxy",
+      "trustedProxy": {
+        "userHeader": "x-forwarded-for"
+      }
+    },
+    "trustedProxies": [
+      "172.30.0.0/24"
+    ]
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "whatsapp": {
+        "enabled": true
+      }
+    }
+  }
+}

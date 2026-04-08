@@ -1,0 +1,195 @@
+El ABC del archivo: docker-compose.yml
+Antes de lanzar comandos, necesitas crear el archivo que contendrá todas las instrucciones. Aquí te explico cómo hacerlo correctamente.
+
+1. Nombre y Formato
+El archivo debe llamarse exactamente docker-compose.yml (o docker-compose.yaml).
+
+Ubicación: Debe estar en la carpeta raíz de tu proyecto.
+
+Formato: Utiliza la sintaxis YAML, que se basa en la indentación (espacios).
+
+¡Cuidado! Nunca uses el tabulador para indentar en un archivo YAML; usa siempre espacios (normalmente 2 por nivel). Un solo espacio de más hará que Docker devuelva un error.
+
+2. Estructura de "llenado" paso a paso
+Para llenar el archivo que hemos analizado, sigue este orden lógico:
+
+A. La Cabecera
+Aunque en versiones modernas es opcional, empezamos definiendo los servicios:
+
+YAML
+services:
+  # Aquí irán colgando todos nuestros contenedores
+B. Añadir un Servicio (Ejemplo: la Web)
+Cada servicio es una "receta" independiente. Para el servicio web, rellenamos así:
+
+Nombre: web: (identificador para Docker).
+
+Imagen: image: php:8.2-apache (el software base).
+
+Contenedor: container_name: web_dominio (el nombre que verás al hacer docker ps).
+
+Puertos: ports: - "127.0.0.1:8080:80" (mapeo de fuera hacia adentro).
+
+Redes: networks: - edge_net (a qué grupo de amigos pertenece este contenedor).
+
+C. El bloque de Redes y Volúmenes
+Al final del archivo, fuera del bloque services:, debemos declarar las redes que hemos mencionado arriba:
+
+YAML
+networks:
+  edge_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+3. Cómo crear el archivo en el servidor
+Si estás por terminal (SSH), la forma más rápida de llenarlo es usando nano:
+
+Ejecuta: nano docker-compose.yml
+
+Pega el código completo que hemos analizado.
+
+Guarda pulsando Ctrl + O, luego Enter y sal con Ctrl + X.
+
+4. Verificación técnica
+Antes de arrancar, comprueba siempre si has llenado el archivo correctamente con este comando:
+
+Bash
+docker-compose config
+Si el comando te devuelve el código limpio, el archivo está bien estructurado. Si hay un error de espacios o sintaxis, te dirá exactamente en qué línea está el fallo.
+
+¿Por qué lo llenamos así?
+Llenar el archivo de forma declarativa (diciendo cómo queremos que sea el estado final) permite que, si mañana quieres añadir un nuevo servicio, solo tengas que añadir un nuevo bloque bajo services:, sin romper lo anterior.
+
+Guía de Construcción: ¿Qué significan todas esas líneas?
+Vamos a desglosar las entradas comunes que verás repetidas en tu archivo y que son el "estándar" de una buena configuración.
+
+1. La Política de Reinicio (restart: always)
+Esta línea aparece en casi todos tus servicios.
+
+Qué hace: Si el servidor se apaga (por un corte de luz) o si el contenedor falla por un error interno, Docker lo volverá a levantar automáticamente en cuanto pueda.
+
+Por qué: Para que no tengas que entrar por SSH a las 3 de la mañana a levantar la web.
+
+2. Variables de Entorno (environment:)
+Es el panel de control de cada contenedor.
+
+TZ: Europe/Madrid: Configura la zona horaria. Si no la pones, los logs de la IA o de la web saldrán con la hora de Londres o UTC, lo que vuelve loco a cualquiera al buscar un error.
+
+OLLAMA_PROXY_URL: http://ollama:11434: Aquí "llenamos" la dirección del motor de IA. Como estamos en la misma red de Docker, usamos el nombre del servicio, no una IP.
+
+3. Persistencia de Datos (volumes:)
+Sin estas líneas, tu contenedor es como una pizarra que se borra al final del día.
+
+Sintaxis: - ./carpeta_local:/ruta_en_contenedor
+
+El caso de /etc/localtime:ro: El :ro significa Read Only (Solo lectura). Esto permite que el contenedor consulte la hora del servidor sin riesgo de que la modifique.
+
+Inyección de Skills: En OpenClaw, mapeamos ./openclaw/skills:/app/skills. Esto "inyecta" tu código de la carpeta real dentro del cerebro del agente.
+
+4. Límites de Hardware (cpus: "2.0")
+Qué hace: Le pone "esposas" al contenedor.
+
+Por qué: La IA (Ollama) es codiciosa. Si no pones esta línea, cuando le pidas un resumen de un libro, usará el 100% de tu CPU y tu página web de ventas dejará de responder. Con 2.0, le dejamos 2 núcleos como máximo.
+
+5. El Orden de Encendido (depends_on:)
+YAML
+    depends_on:
+      - ollama
+Qué hace: Establece una jerarquía.
+
+Por qué: ia_interfaz y openclaw son clientes de ollama. Si intentan conectar y Ollama aún se está cargando, darán error. Esta línea le dice a Docker: "No arranques el chat hasta que el motor de IA esté encendido".
+
+6. Configuración de Red Avanzada (networks: e ipam:)
+Al final del archivo definimos la red edge_net.
+
+driver: bridge: Crea un "puente" virtual donde todos los contenedores se ven entre sí.
+
+ipam (IP Address Management): Aquí es donde "llenamos" el rango de IPs.
+
+subnet: 172.30.0.0/24: Define que las IPs internas irán desde la .1 hasta la .254. Esto es vital para que el proxy y los agentes sepan quién es quién de forma segura.
+
+7. Ejecución de Comandos (command:)
+A veces el contenedor necesita una orden específica nada más nacer.
+
+OpenClaw: command: ["node","openclaw.mjs","gateway", ...]
+
+Aquí le estamos diciendo al contenedor que no use su arranque por defecto, sino que inicie el modo "puerta de enlace" (gateway) y que escuche en la red local (lan).
+
+Resumen para el lector:
+Construir un docker-compose.yml es como escribir un contrato:
+
+Services: Qué queremos ejecutar.
+
+Volumes: Qué queremos recordar.
+
+Environment: Cómo queremos que se comporte.
+
+Networks: Con quién puede hablar.
+
+
+Aquí tienes el post completo y definitivo para recursosformacion.com, con todas las explicaciones técnicas, las correcciones de 2026 y el desglose detallado del bloque environment integrados de forma fluida.
+
+Infraestructura de IA Híbrida y Web: Guía Maestra de Docker Compose
+En el desarrollo actual, no basta con desplegar contenedores; hay que orquestar ecosistemas. Hoy vamos a destripar el archivo docker-compose.yml que utilizamos para gestionar la web de gestionproyectos.com, integrando un motor de IA local (Ollama), agentes inteligentes (OpenClaw) y una interfaz avanzada (LobeChat).
+
+Este análisis está diseñado para que entiendas el porqué de cada línea, desde la seguridad hasta la compatibilidad de APIs.
+
+1. El Servidor Web: Rendimiento y Seguridad
+El servicio web (Apache/PHP 8.2) es nuestra cara al público. Pero no es una instalación estándar:
+
+El comando de arranque (command):
+a2enmod rewrite && echo 'SetEnvIf X-Forwarded-Proto "https" HTTPS=on' > ...
+No solo activamos las URLs amigables. La línea SetEnvIf es vital: le comunica a Apache que, aunque reciba tráfico interno por el puerto 80, debe tratarlo como HTTPS porque viene de un proxy seguro. Sin esto, tu web entraría en un bucle infinito de redirecciones.
+
+Blindaje de puertos:
+Usamos "127.0.0.1:8080:80". Al prefijar la IP local, el puerto 8080 queda oculto para el mundo. Solo nuestro Proxy interno puede hablar con la web.
+
+2. El "Cerebro" de Agentes: Desglosando OpenClaw
+El servicio openclaw es el más denso. Aquí es donde la IA se convierte en una herramienta operativa.
+
+Análisis del bloque environment
+Es fundamental entender por qué usamos estos nombres exactos de variables:
+
+El estándar de OpenAI (Groq):
+- OPENAI_BASE_URL=https://api.groq.com/openai/v1
+Aunque usamos Groq, le indicamos la URL de OpenAI. ¿Por qué? Porque el software habla el "idioma" estándar de OpenAI. Al cambiar la URL, "engañamos" al sistema para que use la velocidad de Groq con el código de OpenAI.
+
+Duplicidad de Keys:
+Verás GEMINI_API_KEY y GOOGLE_API_KEY apuntando a ${AISTUDIO_API_KEY}. Esto garantiza compatibilidad. Diferentes librerías internas buscan la misma llave con nombres distintos; así nos aseguramos de que el motor de Gemini 2.5 Flash funcione siempre.
+
+Seguridad del Gateway:
+GATEWAY_TRUSTED_PROXIES=172.30.0.0/24. Esta es nuestra "lista blanca". El agente solo aceptará órdenes que provengan de nuestra red interna de Docker.
+
+Modo Producción:
+NODE_ENV=production. Desactiva herramientas de depuración innecesarias, reduciendo el consumo de RAM y aumentando la estabilidad.
+
+Persistencia y Acceso al Sistema
+/:/host_system:ro: Mapeamos la raíz de tu servidor real dentro del contenedor en modo solo lectura (:ro). Esto permite que la IA lea logs o configuraciones del sistema para darte soporte técnico, pero le impide borrar o modificar archivos del servidor.
+
+./openclaw/skills:/app/skills: Aquí "inyectamos" habilidades. Cualquier script que metas en esa carpeta local se convertirá en un nuevo superpoder para tu IA de forma instantánea.
+
+3. Ollama: Recursos Limitados y Sincronización
+cpus: "2.0": La IA local es voraz. Al limitarla a 2 núcleos, garantizamos que una consulta pesada a la IA no deje a la web de ventas sin potencia para atender clientes.
+
+Sincronización horaria: Mapeamos /etc/localtime y /etc/timezone. Es crítico que la IA y el servidor tengan la misma hora exacta para que los registros de actividad (logs) sean coherentes durante una auditoría o depuración.
+
+4. La Red Privada: El porqué de la Subred Fija
+Al final del archivo definimos la red edge_net con una subred específica: 172.30.0.0/24.
+
+¿Por qué no dejar que Docker decida? Porque nuestra seguridad (los TRUSTED_PROXIES de OpenClaw) depende de conocer la IP de origen. Si Docker cambia la subred al reiniciar, el sistema de seguridad bloquearía la comunicación entre tus propios servicios. Aquí, la fijeza es seguridad.
+
+5. Resumen de Instalación
+Para poner esto en marcha, el orden es sagrado:
+
+Carpetas: Crea los directorios para los volúmenes (html, data, ollama_data, etc.).
+
+Archivo .env: Crea este archivo con tus claves (Gemini, Groq, Telegram). Docker sustituirá automáticamente las variables ${...} del Compose por tus claves reales.
+
+Despliegue: Ejecuta docker-compose up -d.
+
+Proxy: Desde el panel de Nginx (puerto 81), dirige tus dominios a los servicios internos (puerto 3000 para la IA, puerto 8080 para la web).
+
+Este ecosistema representa una arquitectura profesional: privacidad local con Ollama, potencia en la nube con Gemini 2.5 y una web blindada tras un proxy inverso.
+
+¿Te gustaría que en el próximo artículo viéramos cómo programar tu primera "Skill" personalizada para que la IA pueda consultar el stock de tu base de datos PHP?

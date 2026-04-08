@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Forzar HTTPS (Opcional, recomendado)
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Evitar que se vea la extensión .php
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [NC,L]
+
+# Seguridad: Evitar listado de directorios
+Options -Indexes
