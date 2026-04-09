@@ -3,7 +3,7 @@ param(
   [string]$Action = 'status',
   [switch]$MainOnly,
   [switch]$FacturasOnly,
-  [string]$HtmlEnvFile = 'D:\Proyectos\AI_Servidor\web\html\.env.server',
+  [string]$HtmlEnvFile = 'D:\Proyectos\AI_recolectorFacturas\Web\.env.server',
   [int]$Tail = 120,
   [bool]$SyncProdDbOnStart = $true,
   [bool]$FailIfProdDbSyncFail = $false,

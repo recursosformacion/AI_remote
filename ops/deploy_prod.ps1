@@ -2,7 +2,7 @@ param(
   [string]$SshUser = 'ocw',
   [string]$SshHost = '91.134.255.134',
   [int]$SshPort = 22,
-  [string]$LocalSourcePath = 'D:\Proyectos\AI_Servidor\web\html',
+  [string]$LocalSourcePath = 'D:\Proyectos\AI_recolectorFacturas\Web',
   [string]$RemotePath = '/opt/facturas-prod',
   [string]$RemoteEnvFile = '.env.server',
   [string]$ComposeFile = 'docker-compose.server.yml'
