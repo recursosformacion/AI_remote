@@ -78,7 +78,8 @@ $packageName = "facturas_pre_$stamp.tgz"
 $packagePath = Join-Path $env:TEMP $packageName
 
 Write-Host "[PRE] Empaquetando codigo: $packagePath"
-& tar -czf $packagePath --exclude='.git' --exclude='.vscode' --exclude='test' --exclude='utLocal' --exclude='utPorRevisar' --exclude='utRemoto' --exclude='docs' --exclude='html' --exclude='liberar' --exclude='frontend/node_modules' --exclude='backend/vendor' --exclude='extractor/venv' -C $LocalSourcePath docker-compose.server.yml uploads.ini backend frontend extractor $RemoteEnvFile
+$WebRoot = Split-Path $LocalSourcePath -Parent
+& tar -czf $packagePath --exclude='.git' --exclude='.vscode' --exclude='test' --exclude='utLocal' --exclude='utPorRevisar' --exclude='utRemoto' --exclude='docs' --exclude='html' --exclude='liberar' --exclude='frontend/node_modules' --exclude='backend/vendor' --exclude='extractor/venv' -C $LocalSourcePath backend frontend extractor $RemoteEnvFile -C $WebRoot docker docker-compose.server.yml
 if ($LASTEXITCODE -ne 0) {
   throw "Fallo tar local (codigo $LASTEXITCODE)"
 }

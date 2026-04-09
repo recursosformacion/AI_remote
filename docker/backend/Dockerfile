@@ -29,6 +29,9 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html
 
+# PHP upload config (baked into image - no volume mount needed)
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 # Create storage directory with world-writable permissions for volume mount compatibility
 # and ensure all subdirectories will be writable by the web server (www-data)
 RUN mkdir -p /var/www/html/storage && \

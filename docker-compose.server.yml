@@ -1,0 +1,108 @@
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASS}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app_net
+
+  extractor:
+    build:
+      context: ./extractor
+      dockerfile: ./docker/extractor/Dockerfile
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      AJUSTE_NETO_ENVIO: ${AJUSTE_NETO_ENVIO:-false}
+      DATOS_CAPTURA_RECIBIDAS: ${DATOS_CAPTURA_RECIBIDAS:-}
+      DATOS_CAPTURA_EMITIDAS: ${DATOS_CAPTURA_EMITIDAS:-}
+    expose:
+      - "8000"
+    networks:
+      - app_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./docker/backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      extractor:
+        condition: service_started
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      STORAGE_BASE_PATH: /var/www/html/storage
+      APP_ENV: prod
+      APP_URL: ${APP_URL}
+      EXTRACTOR_URL: http://extractor:8000/extract
+      DATOS_CAPTURA_RECIBIDAS: ${DATOS_CAPTURA_RECIBIDAS:-}
+      DATOS_CAPTURA_EMITIDAS: ${DATOS_CAPTURA_EMITIDAS:-}
+    volumes:
+      - ./backend/storage:/var/www/html/storage
+    expose:
+      - "80"
+    networks:
+      - app_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./docker/frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    expose:
+      - "80"
+    networks:
+      - app_net
+      - npm_net
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    profiles:
+      - dbadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+      HIDE_PHP_VERSION: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${PMA_PORT:-8082}:80"
+    networks:
+      - app_net
+
+volumes:
+  db_data:
+
+networks:
+  app_net:
+    driver: bridge
+  npm_net:
+    external: true
+    name: ${NPM_NETWORK:-npm_default}
