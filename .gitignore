@@ -13,8 +13,10 @@
 /data/
 /letsencrypt/
 
-/html/
 /html.worktrees/
+
+# html/ es un repo Git anidado (AI_recolectorFacturas); se excluye completamente
+html/
 /_legacy_limpieza_*/
 SKILL.md
 
